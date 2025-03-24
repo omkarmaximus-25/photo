@@ -1,0 +1,83 @@
+import json
+import os
+ 
+# Path to the database file
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "db", "database.json")
+ 
+def load_data():
+    """Loads car rental data from the JSON file."""
+    
+    with open(DB_PATH, "r") as file:
+        return json.load(file)
+ 
+def get_available_cars(location: str):
+    """
+    Fetch available cars from the database based on location.
+    """
+    data = load_data()
+    available_cars = []
+ 
+    for category in data["car_types"]:
+        for car in category["cars"]:
+            if car["location"].lower() == location.lower() and car["available"]:
+                available_cars.append(car)
+ 
+    return available_cars
+#json
+{
+  "car_types": [
+    {
+      "type": "Sedan",
+      "cars": [
+        { "car_id": 1, "brand": "Toyota", "model": "Camry", "seat_capacity": 5, "location": "San Francisco", "price_per_day": 2000, "available": true },
+        { "car_id": 2, "brand": "Honda", "model": "Civic", "seat_capacity": 5, "location": "New York", "price_per_day": 1800, "available": true },
+        { "car_id": 3, "brand": "Skoda", "model": "Octavia", "seat_capacity": 5, "location": "London", "price_per_day": 2400, "available": true },
+        { "car_id": 4, "brand": "Hyundai", "model": "Sonata", "seat_capacity": 5, "location": "Paris", "price_per_day": 2100, "available": true },
+        { "car_id": 5, "brand": "Mazda", "model": "Mazda6", "seat_capacity": 5, "location": "Tokyo", "price_per_day": 2000, "available": true },
+        { "car_id": 6, "brand": "Volkswagen", "model": "Passat", "seat_capacity": 5, "location": "Delhi", "price_per_day": 2200, "available": true },
+        { "car_id": 7, "brand": "Honda", "model": "Accord", "seat_capacity": 5, "location": "Singapore", "price_per_day": 2300, "available": true }
+      ]
+    },
+    {
+      "type": "SUV",
+      "cars": [
+        { "car_id": 8, "brand": "Toyota", "model": "RAV4", "seat_capacity": 7, "location": "Sydney", "price_per_day": 2300, "available": true },
+        { "car_id": 9, "brand": "Honda", "model": "CR-V", "seat_capacity": 7, "location": "Hong Kong", "price_per_day": 2500, "available": true },
+        { "car_id": 10, "brand": "Mazda", "model": "CX-5", "seat_capacity": 5, "location": "Toronto", "price_per_day": 2400, "available": true },
+        { "car_id": 11, "brand": "Chevrolet", "model": "Equinox", "seat_capacity": 5, "location": "Frankfurt", "price_per_day": 2200, "available": true },
+        { "car_id": 12, "brand": "Subaru", "model": "Outback", "seat_capacity": 5, "location": "Amsterdam", "price_per_day": 2400, "available": true },
+        { "car_id": 13, "brand": "Ford", "model": "EcoSport", "seat_capacity": 5, "location": "Bangkok", "price_per_day": 2100, "available": true },
+        { "car_id": 14, "brand": "Hyundai", "model": "Creta", "seat_capacity": 5, "location": "Seoul", "price_per_day": 2200, "available": true }
+      ]
+    },
+    {
+      "type": "Hatchback",
+      "cars": [
+        { "car_id": 15, "brand": "Volkswagen", "model": "Polo", "seat_capacity": 4, "location": "Shanghai", "price_per_day": 1650, "available": true },
+        { "car_id": 16, "brand": "Hyundai", "model": "Accent", "seat_capacity": 5, "location": "Beijing", "price_per_day": 1600, "available": true },
+        { "car_id": 17, "brand": "Renault", "model": "Kwid", "seat_capacity": 4, "location": "San Francisco", "price_per_day": 1400, "available": true },
+        { "car_id": 18, "brand": "Chevrolet", "model": "Spark", "seat_capacity": 4, "location": "Singapore", "price_per_day": 1450, "available": true },
+        { "car_id": 19, "brand": "Ford", "model": "Focus", "seat_capacity": 5, "location": "Sydney", "price_per_day": 1550, "available": true },
+        { "car_id": 20, "brand": "Toyota", "model": "Yaris", "seat_capacity": 5, "location": "Hong Kong", "price_per_day": 1500, "available": true }
+      ]
+    }
+  ]
+}
+#route
+from fastapi import APIRouter, HTTPException, Query
+from services.car_rental_service import get_available_cars
+ 
+router = APIRouter()
+ 
+@router.get("/cars/")
+def fetch_cars(location: str = Query(..., description="Pickup location")):
+    """
+    API endpoint to fetch available cars by location.
+    """
+    cars = get_available_cars(location)
+    
+    if not cars:
+        raise HTTPException(status_code=404, detail="No available cars found at this location.")
+ 
+    return {"available_cars": cars}
+ 
